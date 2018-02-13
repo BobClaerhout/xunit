@@ -306,6 +306,7 @@ namespace Xunit.ConsoleClient
             if (!parallelizeAssemblies.HasValue)
                 parallelizeAssemblies = project.All(assembly => assembly.Configuration.ParallelizeAssemblyOrDefault);
 
+            logger.LogMessage($"NeedsXml: {needsXml}");
             if (needsXml)
                 assembliesElement = new XElement("assemblies");
 
@@ -316,7 +317,10 @@ namespace Xunit.ConsoleClient
                 var tasks = project.Assemblies.Select(assembly => Task.Run(() => ExecuteAssembly(consoleLock, assembly, serialize, needsXml, parallelizeTestCollections, maxThreadCount, diagnosticMessages, noColor, appDomains, failSkips, stopOnFail, project.Filters, internalDiagnosticMessages)));
                 var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
                 foreach (var assemblyElement in results.Where(result => result != null))
-                    assembliesElement.Add(assemblyElement);
+                {
+                  logger.LogMessage($"AssembliesElement: {assembliesElement?.ToString()}");
+                  assembliesElement.Add(assemblyElement);
+                }
             }
             else
             {
@@ -324,11 +328,16 @@ namespace Xunit.ConsoleClient
                 {
                     var assemblyElement = ExecuteAssembly(consoleLock, assembly, serialize, needsXml, parallelizeTestCollections, maxThreadCount, diagnosticMessages, noColor, appDomains, failSkips, stopOnFail, project.Filters, internalDiagnosticMessages);
                     if (assemblyElement != null)
+                    {
+                        logger.LogMessage($"AssembliesElement before add assembly {assembly.AssemblyFilename}: {assembliesElement?.ToString()}");
                         assembliesElement.Add(assemblyElement);
+                    }
                 }
             }
 
             clockTime.Stop();
+
+            logger.LogMessage($"AssembliesElement before adding timestamp: {assembliesElement?.ToString()}");
 
             if (assembliesElement != null)
                 assembliesElement.Add(new XAttribute("timestamp", DateTime.Now.ToString(CultureInfo.InvariantCulture)));
