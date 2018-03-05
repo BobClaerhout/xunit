@@ -17,6 +17,7 @@ namespace Xunit
         readonly Action<string, ExecutionSummary> completionCallback;
         volatile int errors;
         readonly IMessageSinkWithTypes innerSink;
+        readonly IRunnerLogger _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DelegatingExecutionSummarySink"/> class.
@@ -24,15 +25,17 @@ namespace Xunit
         /// <param name="innerSink">The inner sink to pass messages to.</param>
         /// <param name="cancelThunk"></param>
         /// <param name="completionCallback"></param>
-        public DelegatingExecutionSummarySink(IMessageSinkWithTypes innerSink,
+    public DelegatingExecutionSummarySink(IMessageSinkWithTypes innerSink,
                                               Func<bool> cancelThunk = null,
-                                              Action<string, ExecutionSummary> completionCallback = null)
+                                              Action<string, ExecutionSummary> completionCallback = null,
+                                              IRunnerLogger logger = null)
         {
             Guard.ArgumentNotNull(nameof(innerSink), innerSink);
 
             this.innerSink = innerSink;
             this.cancelThunk = cancelThunk ?? (() => false);
             this.completionCallback = completionCallback;
+            _logger = logger; 
         }
 
         /// <inheritdoc/>
@@ -54,7 +57,8 @@ namespace Xunit
             ExecutionSummary.Errors = errors;
 
             completionCallback?.Invoke(Path.GetFileNameWithoutExtension(args.Message.TestAssembly.Assembly.AssemblyPath), ExecutionSummary);
-
+            if (_logger != null)
+              _logger.LogMessage("DelegatingExecutionSummarySink.HandleTestAssemblyFinished");
             Finished.Set();
         }
 

@@ -1,6 +1,4 @@
-﻿#if !NET35
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -90,8 +88,6 @@ namespace Xunit
 
         XElement CreateTestResultElement(ITestResultMessage testResult, string resultText)
         {
-            if (_logger != null)
-              _logger.LogMessage($"resultText: {resultText}");
             ITest test = testResult.Test;
             ITestCase testCase = testResult.TestCase;
             ITestMethod testMethod = testCase.TestMethod;
@@ -106,9 +102,8 @@ namespace Xunit
                     new XAttribute("time", testResult.ExecutionTime.ToString(CultureInfo.InvariantCulture)),
                     new XAttribute("result", resultText)
                 );
-
             var testOutput = testResult.Output;
-            if (!string.IsNullOrWhiteSpace(testOutput))
+                        if (!string.IsNullOrWhiteSpace(testOutput))
                 testResultElement.Add(new XElement("output", new XCData(testOutput)));
 
             ISourceInformation sourceInformation = testCase.SourceInformation;
@@ -142,6 +137,9 @@ namespace Xunit
 
             collectionElement.Add(testResultElement);
 
+            if (_logger != null)
+              _logger.LogMessage($"collectionElement: {collectionElement}");
+
             return testResultElement;
         }
 
@@ -163,6 +161,8 @@ namespace Xunit
 
         void HandleTestAssemblyFinished(MessageHandlerArgs<ITestAssemblyFinished> args)
         {
+            if (_logger != null)
+              _logger.LogMessage($"assemblyElementBeforeAdd: {assemblyElement}");
             assemblyElement.Add(
                 new XAttribute("total", ExecutionSummary.Total),
                 new XAttribute("passed", ExecutionSummary.Total - ExecutionSummary.Failed - ExecutionSummary.Skipped),
@@ -172,9 +172,15 @@ namespace Xunit
                 new XAttribute("errors", ExecutionSummary.Errors)
             );
 
+
             foreach (var element in testCollectionElements.Values)
                 assemblyElement.Add(element);
-        }
+              if (_logger != null)
+              {
+                _logger.LogMessage($"testCollectionElementsCount: {testCollectionElements.Count}");
+                _logger.LogMessage($"assemblyElementAfterAdd: {assemblyElement}");
+              }
+            }
 
         void HandleTestAssemblyStarting(MessageHandlerArgs<ITestAssemblyStarting> args)
         {
@@ -207,6 +213,8 @@ namespace Xunit
         {
             var testCollectionFinished = args.Message;
             var collectionElement = GetTestCollectionElement(testCollectionFinished.TestCollection);
+            if (_logger != null)
+              _logger.LogMessage($"collectionElementBeforeAdd: {collectionElement}");
             collectionElement.Add(
                 new XAttribute("total", testCollectionFinished.TestsRun),
                 new XAttribute("passed", testCollectionFinished.TestsRun - testCollectionFinished.TestsFailed - testCollectionFinished.TestsSkipped),
@@ -215,6 +223,8 @@ namespace Xunit
                 new XAttribute("name", XmlEscape(testCollectionFinished.TestCollection.DisplayName)),
                 new XAttribute("time", testCollectionFinished.ExecutionTime.ToString("0.000", CultureInfo.InvariantCulture))
             );
+            if (_logger != null)
+              _logger.LogMessage($"collectionElementAfterAdd: {collectionElement}");
         }
 
         void HandleTestFailed(MessageHandlerArgs<ITestFailed> args)

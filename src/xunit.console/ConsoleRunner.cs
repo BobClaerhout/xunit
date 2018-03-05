@@ -426,7 +426,7 @@ namespace Xunit.ConsoleClient
 
                         reporterMessageHandler.OnMessage(new TestAssemblyExecutionStarting(assembly, executionOptions));
 
-                        IExecutionSink resultsSink = new DelegatingExecutionSummarySink(reporterMessageHandler, () => cancel, (path, summary) => completionMessages.TryAdd(path, summary));
+                        IExecutionSink resultsSink = new DelegatingExecutionSummarySink(reporterMessageHandler, () => cancel, (path, summary) => completionMessages.TryAdd(path, summary), logger);
                         if (assemblyElement != null)
                         {
                             logger.LogMessage($"Adding DelegatingXmlCreationSink");
@@ -439,7 +439,8 @@ namespace Xunit.ConsoleClient
 
                         controller.RunTests(filteredTestCases, resultsSink, executionOptions);
                         resultsSink.Finished.WaitOne();
-
+                        
+            
                         reporterMessageHandler.OnMessage(new TestAssemblyExecutionFinished(assembly, executionOptions, resultsSink.ExecutionSummary));
                         if (stopOnFail && resultsSink.ExecutionSummary.Failed != 0)
                         {
@@ -465,6 +466,7 @@ namespace Xunit.ConsoleClient
                 }
             }
 
+            logger.LogMessage($"ExecuteAssembly: {assemblyElement}");
             return assemblyElement;
         }
 
