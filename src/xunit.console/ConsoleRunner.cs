@@ -428,7 +428,10 @@ namespace Xunit.ConsoleClient
 
                         IExecutionSink resultsSink = new DelegatingExecutionSummarySink(reporterMessageHandler, () => cancel, (path, summary) => completionMessages.TryAdd(path, summary));
                         if (assemblyElement != null)
-                            resultsSink = new DelegatingXmlCreationSink(resultsSink, assemblyElement);
+                        {
+                            logger.LogMessage($"Adding DelegatingXmlCreationSink");
+                            resultsSink = new DelegatingXmlCreationSink(resultsSink, assemblyElement, logger);
+                        }
                         if (longRunningSeconds > 0)
                             resultsSink = new DelegatingLongRunningTestDetectionSink(resultsSink, TimeSpan.FromSeconds(longRunningSeconds), MessageSinkWithTypesAdapter.Wrap(diagnosticMessageSink));
                         if (failSkips)
