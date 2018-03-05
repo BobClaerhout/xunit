@@ -22,6 +22,7 @@ namespace Xunit
         readonly XElement errorsElement;
         readonly IExecutionSink innerSink;
         readonly Dictionary<Guid, XElement> testCollectionElements = new Dictionary<Guid, XElement>();
+        IRunnerLogger _logger = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DelegatingXmlCreationSink"/> class.
@@ -29,11 +30,12 @@ namespace Xunit
         /// <param name="innerSink"></param>
         /// <param name="assemblyElement"></param>
         public DelegatingXmlCreationSink(IExecutionSink innerSink,
-                                         XElement assemblyElement)
+                                         XElement assemblyElement, IRunnerLogger logger = null)
         {
             Guard.ArgumentNotNull(nameof(innerSink), innerSink);
             Guard.ArgumentNotNull(nameof(assemblyElement), assemblyElement);
-
+            
+            _logger = logger;
             this.innerSink = innerSink;
             this.assemblyElement = assemblyElement;
 
@@ -88,6 +90,8 @@ namespace Xunit
 
         XElement CreateTestResultElement(ITestResultMessage testResult, string resultText)
         {
+            if (_logger != null)
+              _logger.LogMessage($"resultText: {resultText}");
             ITest test = testResult.Test;
             ITestCase testCase = testResult.TestCase;
             ITestMethod testMethod = testCase.TestMethod;
